@@ -331,52 +331,167 @@ removeCourse(course_id);
 
 
 
-# Mongoose: Data Validation
+# Data Validation
 When defining a schema, you can set the type of a property to a SchemaType object. You use this object to define the validation requirements for the given property.
 
+## Adding Validation
 ```bash
-# Adding validation
+#  Schema
 new mongoose.Schema({
     name: { 
       type: String, 
       required: true 
     }
+    author: String,
+    date: {type: Date, default: Date.now}
 })
+
+# CRUD Operations
+# Saving a Document
+async function createCourse(){
+  const course = new Course({
+    //name: 'Mastering Node.js', 
+    # error.message - "Course validation failed: name: Path `name` is required."
+    author: 'Mosh'
+  });
+  try{
+    const result = await course.save();
+    console.log(result);
+  }
+  catch(err){
+    console.log(err.message);
+  }
+}
+
+createCourse();
 ```
 
-- Validation logic is executed by Mongoose prior to saving a document to the database. You can also trigger it manually by calling the validate() method.
-- Built-in validators:
-  - Strings: minlength, maxlength, match, enum
-  - Numbers: min, max
-  - Dates: min, max
-  - All types: required
+Validation logic is executed by Mongoose prior to saving a document to the database. You can also trigger it manually by calling the validate() method.
 
 ```bash
-# Custom validation
-tags: [
-    type: Array,
-    validate: {
-        validator: function(v) { return v && v.length > 0; },
-        message: 'A course should have at least 1 tag.'
-    }
-]
+course.validate(err => {
+  if(err){ console.log(err.message)};
+});
+# or,
+const isValid = await course.validate();
+if(!isValid){ ... };
 ```
 
-- If you need to talk to a database or a remote service to perform the validation, you need to create an async validator:
+
+
+## Built-in Validators
+  - Strings: `minlength`, `maxlength`, `match`, `enum`
+  - Numbers: `min`, `max`
+  - Dates: `min`, `max`
+  - All types: `required`
 
 ```bash
-validate: {
-    isAsync: true
-    validator: function(v, callback) {
-        # Do the validation, when the result is ready, call the callback
-        callback(isValid);
-    }
+# Schema
+const courseSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    //match: /pattern/,
+    minlength: 5,
+    maxlength: 255
+  },
+  author: String,
+  catagory: {
+    type: String,
+    required: true,
+    enum: ['web', 'mobile', 'network']
+  },
+  tags: [String],
+  date: {
+    type: Date,
+    default: Date.now
+  },
+  isPublished: {
+    type: Boolean,
+    default: false
+  },
+  price: {
+    type: Number,
+    required: function() { return this.isPublished; },
+    min: 10,
+    max: 200
+  }
+});
+
+# CRUD Operations
+# Saving a Document
+async function createCourse(){
+  const course = new Course({
+    name: 'Drill Node',
+    author: 'Biprodas',
+    catagory: '-',
+    tags: ['react', 'frontend'],
+    isPublished: true,
+    price: 9
+  });
+  try{
+    const result = await course.save();
+    console.log(result);
+  }
+  catch(err){
+    console.log(err.message);
+  }
+}
+
+createCourse();
+```
+
+
+
+## Custom Validators
+
+```bash
+tags: {
+  type: Array,
+  validate: {
+    validator: function(v) { return v && v.length > 0; },
+    message: 'A course should have at least 1 tag.'
+  }
 }
 ```
 
-- Other useful SchemaType properties:
-  - Strings: lowercase, uppercase, trim
-  - All types: get, set (to define a custom getter/setter)
+
+## Async Validators
+- If you need to talk to a database or a remote service to perform the validation, you need to create an async validator.
+
+```bash
+tags: {
+  type: Array,
+  validate: {
+    isAsync: true,
+    validator: function(v, callback){
+      setTimeout(() => {
+        //do some async work
+        const result = v && v.length > 0;
+        callback(result);
+      }, 4000);
+    },
+    message: 'A course should have at least one tag.'
+  }
+}
+```
+
+#### Check Validation Errors
+```bash
+  try{
+    const result = await course.save();
+    console.log(result);
+  }
+  catch(err){
+    for(field in err.errors){
+      console.log(err.errors[field]).message;
+    }
+  }
+```
+
+Other useful SchemaType properties:
+  - Strings: `lowercase`, `uppercase`, `trim`
+  - All types: `get`, `set` (to define a custom getter/setter)
 
 ```bash
 price: {
@@ -386,8 +501,10 @@ price: {
 }
 ```
 
+----------------------------------------------------------------------------------
 
-#### Mongoose: Modelling Relationships between Connected Data
+
+# Mongoose: Modelling Relationships between Connected Data
 
 - To model relationships between connected data, we can either reference a document or embed it in another document.
 - When referencing a document, there is really no relationship between these two documents. So, it is possible to reference a non-existing document.
