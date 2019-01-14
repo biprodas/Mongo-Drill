@@ -166,7 +166,8 @@ async function createCourse(){
 createCourse();
 ```
 
-- Validation logic is executed by Mongoose prior to saving a document to the database. You can also trigger it manually by calling the validate() method.
+Validation logic is executed by Mongoose prior to saving a document to the database. You can also trigger it manually by calling the validate() method.
+
 ```bash
 course.validate(err => {
   if(err){ console.log(err.message)};
@@ -178,7 +179,7 @@ if(!isValid){ ... };
 
 
 
-## Built-in Validators:
+## Built-in Validators
   - Strings: `minlength`, `maxlength`, `match`, `enum`
   - Numbers: `min`, `max`
   - Dates: `min`, `max`
