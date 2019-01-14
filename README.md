@@ -1,61 +1,25 @@
-## Usage
-This repository have several branches contains projects using MongoDB, Mongoose, Node, Express.  
-Go to a branch:
-```
-$ git checkout branch_name
-```
+# MongoDB CRUD Operations
 
-
-# Mongo DB
-
-- MongoDB is an open-source document database. It stores data in flexible, JSONlike documents.  
-- In relational databases we have tables and rows, in MongoDB we have collections and documents. A document can contain sub-documents.  
-- We don’t have relationships between documents.  
-
-
-## Prerequisites
+#### Prerequisites
   - Install [Node.js]()
   - Install and Connect [MongoDB]() 
   - [MongoDB Compass]() or [Robo 3T]() (Optional)
 
-## Installation
+## Quick Start
 ```bash
+# Installation
 $ npm install mongoose -save
-```
 
-## Importing
-```bash
-# Using Node.js `require()`
+# Importing
 const mongoose = require('mongoose');
 
-# Using ES6 imports
-import mongoose from 'mongoose';
-```
-
-## Mongo DB Connection
-```bash
 # Connecting to MongoDB
 const mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost/playground')
     .then(() => console.log('Connected to MongoDB...'))
     .catch(err => console.error('Connection failed...'));
-```
 
-## Schema
-To store objects in MongoDB, we need to define a Mongoose schema first. The schema defines the shape of documents in MongoDB.
-
-```bash
 # Defining a Schema
-const courseSchema = new mongoose.Schema({
-    name: String,
-    price: Number
-});
-```
-We can use a SchemaType object to provide additional details.  
-Supported types are: **`String`, `Number`, `Date`, `Buffer` , `Boolean`, `ObjectID`, `Array`.**
-
-```bash
-# Using a SchemaType object
 const courseSchema = new mongoose.Schema({
   name: String,
   author: ObjectID,
@@ -70,16 +34,11 @@ const courseSchema = new mongoose.Schema({
   },
   price: Number
 });
-```
 
-## Model
-Once we have a schema, we need to compile it into a model. A model is like a class. It’s a blueprint for creating objects.
-
-```bash
 # Creating a model
 const Course = mongoose.model('Course', courseSchema);
-```
 
+```
 
 # CRUD Operations
 ## Saving a Document
@@ -330,124 +289,5 @@ removeCourse(course_id);
 ---------------------------------------------------------------------------------
 
 
-
-# Mongoose: Data Validation
-When defining a schema, you can set the type of a property to a SchemaType object. You use this object to define the validation requirements for the given property.
-
-```bash
-# Adding validation
-new mongoose.Schema({
-    name: { 
-      type: String, 
-      required: true 
-    }
-})
-```
-
-- Validation logic is executed by Mongoose prior to saving a document to the database. You can also trigger it manually by calling the validate() method.
-- Built-in validators:
-  - Strings: minlength, maxlength, match, enum
-  - Numbers: min, max
-  - Dates: min, max
-  - All types: required
-
-```bash
-# Custom validation
-tags: [
-    type: Array,
-    validate: {
-        validator: function(v) { return v && v.length > 0; },
-        message: 'A course should have at least 1 tag.'
-    }
-]
-```
-
-- If you need to talk to a database or a remote service to perform the validation, you need to create an async validator:
-
-```bash
-validate: {
-    isAsync: true
-    validator: function(v, callback) {
-        # Do the validation, when the result is ready, call the callback
-        callback(isValid);
-    }
-}
-```
-
-- Other useful SchemaType properties:
-  - Strings: lowercase, uppercase, trim
-  - All types: get, set (to define a custom getter/setter)
-
-```bash
-price: {
-    type: Number,
-    get: v => Math.round(v),
-    set: v => Math.round(v)
-}
-```
-
-
-#### Mongoose: Modelling Relationships between Connected Data
-
-- To model relationships between connected data, we can either reference a document or embed it in another document.
-- When referencing a document, there is really no relationship between these two documents. So, it is possible to reference a non-existing document.
-- Referencing documents (normalization) is a good approach when you want to enforce data consistency. Because there will be a single instance of an object in the database. But this approach has a negative impact on the performance of your queries because in MongoDB we cannot JOIN documents as we do in relational databases. So, to get a complete representation of a document with its related documents, we need to send multiple queries to the database.
-- Embedding documents (denormalization) solves this issue. We can read a complete representation of a document with a single query. All the necessary data is embedded in one document and its children. But this also means we’ll have multiple copies of data in different places. While storage is not an issue these days, having multiple copies means changes made to the original document may not propagate to all copies. If the database server dies during an update, some documents will be inconsistent. For every business, for every
-problem, you need to ask this question: “can we tolerate data being inconsistent for a short period of time?” If not, you’ll have to use references. But again, this means that your queries will be slower.
-
-```bash
-# Referencing a document
-const courseSchema = new mongoose.Schema({
-    author: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: ‘Author’
-    }
-})
-
-# Referencing a document
-const courseSchema = new mongoose.Schema({
-    author: {
-        type: new mongoose.Schema({
-            name: String,
-            bio: String
-        })
-    }
-})
-```
-
-- Embedded documents don’t have a save method. They can only be saved in the context of their parent.
-
-```bash
-# Updating an embedded document
-const course = await Course.findById(courseId);
-course.author.name = 'New Name';
-course.save();
-```
-
-- We don’t have transactions in MongoDB. To implement transactions, we use a pattern called "Two Phase Commit". If you don’t want to manually implement this pattern, use the Fawn NPM package:
-
-```bash
-# Implementing transactions using Fawn
-try {
-  await new Fawn.Task()
-    .save('rentals', newRental)
-    .update('movies', { _id: movie._id }, { $`inc`: numberInStock: -1 })
-    .run();
-  }
-catch(ex) {
-  # At this point, all operations are automatically rolled back
-}
-```
-
-- ObjectIDs are generated by MongoDB driver and are used to uniquely identify a document. They consist of 12 bytes:
-- 4 bytes: timestamp
-- 3 bytes: machine identifier
-- 2 bytes: process identifier
-- 3 byes: counter
-- ObjectIDs are almost unique. In theory, there is a chance for two ObjectIDs to be
-equal but the odds are very low (1/16,000,000) for most real-world applications.
-```bash
-# Validating ObjectIDs
-mongoose.Types.ObjectID.isValid(id);
-```
-- To validate ObjectIDs using joi, use joi-objectid NPM package.
+# Author
+[**Biprodas Roy**]()
